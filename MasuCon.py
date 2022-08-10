@@ -71,12 +71,14 @@ def main():
 
         time.sleep(0.1)
 
+        # read and process MasuCon state
+        # compare to simulator state
+        # determine steps to bring sim into sync with MasuCon
+        # send corresponding keypresses to simulator
 
-
-
-    # keyboard = Controller()
-    # keyboard.press('a')
-    # keyboard.release('a')
+        # keyboard = Controller()
+        # keyboard.press('a')
+        # keyboard.release('a')
 
 if __name__ == "__main__":
     main()
