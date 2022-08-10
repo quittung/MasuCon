@@ -1,13 +1,19 @@
 import json
 import time
+import typing
 
 # required modules: pyserial, pyinput
 import serial
 import serial.tools.list_ports
 from pynput.keyboard import Controller
 
-def find_port(id: str) -> serial.Serial:
-    for port_info in serial.tools.list_ports.comports():
+def find_port(id: str) -> typing.Optional[serial.Serial]:
+    port_list = serial.tools.list_ports.comports()
+    if not port_list:
+        print("No ports found")
+        return None
+
+    for port_info in port_list:
         print(f"Testing port: {port_info}")
         try:
             # open port
@@ -24,12 +30,18 @@ def find_port(id: str) -> serial.Serial:
             if response == id:
                 # controller found, return port
                 return port
+            elif not response:
+                print("No response")
             else:
-                # wrap up and try next port
-                port.close()
-        except:
+                print("Handshake failed")
+            
+            # close port
+            port.close()
+
+        except Exception as e:
             # just ignore all errors and try the next port
-            pass
+            print(f"Error: {e}")
+            continue
 
 
 def main():
@@ -48,7 +60,7 @@ def main():
         print("Unable to establish connection to MasuCon")
         return
 
-    print(f"Connection established")
+    print("Connection established")
 
 
     # main loop
