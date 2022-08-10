@@ -1,6 +1,15 @@
 {
     "controller_id": "masucon",
-    "steps_power": 5,
-    "steps_brake": 5,
-    "eb_threshold": 11
+    "lever_positons": {
+        "max_power": 5,
+        "max_service_brake": 5,
+        "threshold_emergency_brake": 11
+    },
+    "buttons": {
+        "up": " ",
+        "down": " ",
+        "n": " ",
+        "b1": " ",
+        "eb": " "
+    }
 }
