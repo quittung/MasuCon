@@ -1,0 +1,6 @@
+{
+    "controller_id": "masucon",
+    "steps_power": 5,
+    "steps_brake": 5,
+    "eb_threshold": 11
+}
