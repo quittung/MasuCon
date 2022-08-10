@@ -11,5 +11,7 @@
         "n": " ",
         "b1": " ",
         "eb": " "
-    }
+    },
+    "button_delay_before_release": 0.1,
+    "button_delay_after_release": 0
 }

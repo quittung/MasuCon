@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import time
 import typing
@@ -43,6 +44,11 @@ def find_port(id: str) -> typing.Optional[serial.Serial]:
             print(f"Error: {e}")
             continue
 
+def press_key(key: str, controller: Controller, delay_before_release: float = 0.1, delay_after_release: float = 0):
+    controller.press(key)
+    time.sleep(delay_before_release)
+    controller.release(key)
+    time.sleep(delay_after_release)
 
 def main():
     print("MasuCon Driver v2.0")
@@ -51,6 +57,21 @@ def main():
     print("Loading settings...")
     with open("settings.json", "r") as f:
         settings = json.load(f)
+
+
+    # prepare keyboard controller
+    print("Preparing keyboard controller...")
+    keyboard_controller = Controller()
+    press_key_simple = partial(
+        press_key, 
+        controller=keyboard_controller, 
+        delay_before_release=settings["button_delay_before_release"], 
+        delay_after_release=settings["button_delay_after_release"]
+    )
+
+    # use like this:
+    # press_key_simple("l")
+
 
     # connect to MasuCon
     print("Connecting to MasuCon...")
@@ -75,10 +96,7 @@ def main():
         # compare to simulator state
         # determine steps to bring sim into sync with MasuCon
         # send corresponding keypresses to simulator
-
-        # keyboard = Controller()
-        # keyboard.press('a')
-        # keyboard.release('a')
+        
 
 if __name__ == "__main__":
     main()
