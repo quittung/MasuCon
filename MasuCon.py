@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from functools import partial
 import json
+from re import L
 import time
 import typing
 
@@ -7,6 +9,7 @@ import typing
 import serial
 import serial.tools.list_ports
 from pynput.keyboard import Controller
+
 
 def find_port(id: str) -> typing.Optional[serial.Serial]:
     port_list = serial.tools.list_ports.comports()
@@ -44,11 +47,39 @@ def find_port(id: str) -> typing.Optional[serial.Serial]:
             print(f"Error: {e}")
             continue
 
+
 def press_key(key: str, controller: Controller, delay_before_release: float = 0.1, delay_after_release: float = 0):
     controller.press(key)
     time.sleep(delay_before_release)
     controller.release(key)
     time.sleep(delay_after_release)
+
+
+def map_lever(lever_pos: int, settings: dict) -> int:
+    """Maps the physical lever position to what is supported by the sim."""
+    if lever_pos > settings["lever_positions"]["max_power"]:
+        # limit to max power position
+        return settings["lever_positions"]["max_power"]
+    elif lever_pos < settings["lever_positions"]["max_service_brake"]:
+        if lever_pos > settings["lever_positions"]["threshold_emergency_brake"]: 
+            # limit to max service brake position
+            return settings["lever_positions"]["max_service_brake"]
+        else:
+            # set to emergency bake
+            return settings["lever_positions"]["max_service_brake"] - 1
+
+
+def lever_to_str(lever_pos: int, max_service_brake: int) -> str:
+    if lever_pos == 0: 
+        return "N"
+    elif lever_pos > 0:
+        return f"P{lever_pos}"
+    else:
+        if lever_pos < max_service_brake:
+            return f"B{lever_pos}"
+        else:
+            return "EB"
+
 
 def main():
     print("MasuCon Driver v2.0")
@@ -79,7 +110,7 @@ def main():
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
-        return
+        # return
 
     print("Connection established")
 
@@ -88,8 +119,16 @@ def main():
     print("Starting main loop...")
     while True:
         # TODO: process incoming data and press corresponding keys
-        print(masucon.readline())
+        # lever_physical = masucon.readline()
+        lever_physical = 7 # DEBUG
+        print(lever_physical)
+        
+        lever_sim = map_lever(lever_physical, settings)
+        print(lever_sim)
 
+        lever_str = lever_to_str(lever_sim, settings["lever_positions"]["max_service_brake"])
+        print(lever_str)
+        
         time.sleep(0.1)
 
         # read and process MasuCon state
