@@ -170,27 +170,60 @@ def main():
     # main loop
     print("Starting main loop...")
     lever_physical = -15        # DEBUG ONLY
+    lever_guess = 0
     while True:
-        # TODO: process incoming data and press corresponding keys
         # lever_physical = masucon.readline()
-        print(lever_physical)
+        lever_target = map_lever(lever_physical, settings)
+        lever_str = lever_to_str(lever_target, settings)
+
+        # determine whether to go up or down
+        direction = 1 if lever_target > lever_guess  else -1
+
+        # list all lever positions from the assumed position to the target position
+        # in reverse order, without the current position
+        postition_list = list(range(lever_target, lever_guess, -direction))
+
+        # create a list of steps to get to the target
+        steps: list[str] = []
+        for p in postition_list:
+            step_string = lever_to_str(p, settings).lower()
+
+            if step_string in settings.buttons:
+                # if one of the positions can be accessed directly, do that and just start there
+                steps.append(settings.buttons[step_string])
+                break
+
+            else:
+                # else just step up or down as neccessary
+                if direction == 1:
+                    steps.append(settings.buttons["up"])
+                else:
+                    steps.append(settings.buttons["down"])
+
+        # reverse the list to get in the right order
+        steps.reverse()
+
+        # if already on a target that can be directly accessed, repress that button just to be sure
+        if len(steps) == 0 and lever_str.lower() in settings.buttons:
+            steps.append(settings.buttons[lever_str.lower()])
         
-        lever_sim = map_lever(lever_physical, settings)
-        print(lever_sim)
+        # send button presses as described in the step list
+        for s in steps:
+            press_key_debug(s)
 
-        lever_str = lever_to_str(lever_sim, settings)
+        # update assumed position
+        lever_guess = lever_target
+
+
+        print(lever_physical)
+        print(lever_target)
         print(lever_str)
-
+        print(steps)
         print()
         time.sleep(0.2)
         lever_physical += 1     # DEBUG ONLY
         if lever_physical > 15: # DEBUG ONLY
             break               # DEBUG ONLY
-
-        # read and process MasuCon state
-        # compare to simulator state
-        # determine steps to bring sim into sync with MasuCon
-        # send corresponding keypresses to simulator
         
 
 if __name__ == "__main__":
