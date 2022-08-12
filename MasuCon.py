@@ -129,9 +129,9 @@ def lever_to_str(lever_pos: int, settings: Settings) -> str:
         return f"P{lever_pos}"
     else:
         if lever_pos < settings.lever_max_service_brake:
-            return f"B{lever_pos}"
-        else:
             return "EB"
+        else:
+            return f"B{abs(lever_pos)}"
 
 
 def main():
