@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 import json
 from re import L
@@ -9,6 +9,39 @@ import typing
 import serial
 import serial.tools.list_ports
 from pynput.keyboard import Controller
+
+
+@dataclass
+class Settings:
+    controller_id: str = "masucon"
+    lever_max_power: int = 5
+    lever_max_service_brake: int = -5
+    lever_thresh_emergency_brake: int = -11
+    
+    buttons: dict[str, str] = field(default_factory=lambda: {
+        "up": " ",
+        "down": " ",
+        "n": " ",
+        "b1": " ",
+        "eb": " "
+    })
+
+    button_delay_before_release: float = 0.1
+    button_delay_after_release: float = 0
+
+
+    @staticmethod
+    def from_file(path: str = "settings.json"):
+        """Loads settings from file. Generates blank file if not found."""
+        try: 
+            with open(path, "r", encoding="utf-8") as f:
+                settings_json = json.load(f)
+                return Settings(**settings_json)
+        except FileNotFoundError:
+            settings = Settings()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(settings.__dict__, f, indent=4)
+            return settings
 
 
 def find_port(id: str) -> typing.Optional[serial.Serial]:
@@ -55,27 +88,33 @@ def press_key(key: str, controller: Controller, delay_before_release: float = 0.
     time.sleep(delay_after_release)
 
 
-def map_lever(lever_pos: int, settings: dict) -> int:
+def map_lever(lever_pos: int, settings: Settings) -> int:
     """Maps the physical lever position to what is supported by the sim."""
-    if lever_pos > settings["lever_positions"]["max_power"]:
+    if lever_pos > settings.lever_max_power:
         # limit to max power position
-        return settings["lever_positions"]["max_power"]
-    elif lever_pos < settings["lever_positions"]["max_service_brake"]:
-        if lever_pos > settings["lever_positions"]["threshold_emergency_brake"]: 
+        return settings.lever_max_power
+        
+    elif lever_pos < settings.lever_max_service_brake:
+        if lever_pos > settings.lever_thresh_emergency_brake: 
             # limit to max service brake position
-            return settings["lever_positions"]["max_service_brake"]
+            return settings.lever_max_service_brake
         else:
             # set to emergency bake
-            return settings["lever_positions"]["max_service_brake"] - 1
+            return settings.lever_max_service_brake - 1
+        
+    else:
+        # no adjustments necessary
+        return lever_pos
+    
 
 
-def lever_to_str(lever_pos: int, max_service_brake: int) -> str:
+def lever_to_str(lever_pos: int, settings: Settings) -> str:
     if lever_pos == 0: 
         return "N"
     elif lever_pos > 0:
         return f"P{lever_pos}"
     else:
-        if lever_pos < max_service_brake:
+        if lever_pos < settings.lever_max_service_brake:
             return f"B{lever_pos}"
         else:
             return "EB"
@@ -86,8 +125,7 @@ def main():
 
     # load settings
     print("Loading settings...")
-    with open("settings.json", "r") as f:
-        settings = json.load(f)
+    settings = Settings.from_file("settings.json")
 
 
     # prepare keyboard controller
@@ -96,8 +134,8 @@ def main():
     press_key_simple = partial(
         press_key, 
         controller=keyboard_controller, 
-        delay_before_release=settings["button_delay_before_release"], 
-        delay_after_release=settings["button_delay_after_release"]
+        delay_before_release=settings.button_delay_before_release, 
+        delay_after_release=settings.button_delay_after_release
     )
 
     # use like this:
@@ -106,7 +144,7 @@ def main():
 
     # connect to MasuCon
     print("Connecting to MasuCon...")
-    masucon = find_port(settings["controller_id"])
+    masucon = find_port(settings.controller_id)
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
@@ -126,9 +164,9 @@ def main():
         lever_sim = map_lever(lever_physical, settings)
         print(lever_sim)
 
-        lever_str = lever_to_str(lever_sim, settings["lever_positions"]["max_service_brake"])
+        lever_str = lever_to_str(lever_sim, settings)
         print(lever_str)
-        
+
         time.sleep(0.1)
 
         # read and process MasuCon state
