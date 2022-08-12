@@ -34,14 +34,26 @@ class Settings:
     def from_file(path: str = "settings.json"):
         """Loads settings from file. Generates blank file if not found."""
         try: 
+            # try to load the settings file
             with open(path, "r", encoding="utf-8") as f:
                 settings_json = json.load(f)
                 return Settings(**settings_json)
+
         except FileNotFoundError:
+            # generate a new one if not found
             settings = Settings()
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(settings.__dict__, f, indent=4)
             return settings
+
+        except TypeError as e:
+            # alert user if settings file is incompatible
+            print("Error occurred while reading settings:")
+            print(e)
+            print("Using default settings for now. Try regenerating the settings file and transfer your changes manually.")
+
+            return Settings()
+
 
 
 def find_port(id: str) -> typing.Optional[serial.Serial]:
