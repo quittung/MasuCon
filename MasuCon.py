@@ -55,7 +55,6 @@ class Settings:
             return Settings()
 
 
-
 def find_port(id: str) -> typing.Optional[serial.Serial]:
     port_list = serial.tools.list_ports.comports()
     if not port_list:
@@ -100,6 +99,10 @@ def press_key(key: str, controller: Controller, delay_before_release: float = 0.
     time.sleep(delay_after_release)
 
 
+def press_key_debug(key: str):
+    print(key, end="")
+
+
 def map_lever(lever_pos: int, settings: Settings) -> int:
     """Maps the physical lever position to what is supported by the sim."""
     if lever_pos > settings.lever_max_power:
@@ -118,7 +121,6 @@ def map_lever(lever_pos: int, settings: Settings) -> int:
         # no adjustments necessary
         return lever_pos
     
-
 
 def lever_to_str(lever_pos: int, settings: Settings) -> str:
     if lever_pos == 0: 
@@ -160,17 +162,17 @@ def main():
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
-        # return
+        # return                # DEBUG ONLY
 
     print("Connection established")
 
 
     # main loop
     print("Starting main loop...")
+    lever_physical = -15        # DEBUG ONLY
     while True:
         # TODO: process incoming data and press corresponding keys
         # lever_physical = masucon.readline()
-        lever_physical = 7 # DEBUG
         print(lever_physical)
         
         lever_sim = map_lever(lever_physical, settings)
@@ -179,7 +181,11 @@ def main():
         lever_str = lever_to_str(lever_sim, settings)
         print(lever_str)
 
-        time.sleep(0.1)
+        print()
+        time.sleep(0.2)
+        lever_physical += 1     # DEBUG ONLY
+        if lever_physical > 15: # DEBUG ONLY
+            break               # DEBUG ONLY
 
         # read and process MasuCon state
         # compare to simulator state
