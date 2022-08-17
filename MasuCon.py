@@ -14,6 +14,7 @@ from pynput.keyboard import Controller
 @dataclass
 class Settings:
     controller_id: str = "masucon"
+    timeout: float = 1
     lever_max_power: int = 5
     lever_max_service_brake: int = -5
     lever_thresh_emergency_brake: int = -11
@@ -55,7 +56,7 @@ class Settings:
             return Settings()
 
 
-def find_port(id: str) -> typing.Optional[serial.Serial]:
+def find_port(id: str, timeout: float) -> typing.Optional[serial.Serial]:
     port_list = serial.tools.list_ports.comports()
     if not port_list:
         print("No ports found")
@@ -68,7 +69,7 @@ def find_port(id: str) -> typing.Optional[serial.Serial]:
             port = serial.Serial(
                 port = port_info.name, 
                 baudrate = 9600,
-                timeout = 2
+                timeout = timeout
             )   
 
             # ask for id
@@ -166,7 +167,7 @@ def main():
 
     # connect to MasuCon
     print("Connecting to MasuCon...")
-    masucon = find_port(settings.controller_id)
+    masucon = find_port(settings.controller_id, settings.timeout)
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
