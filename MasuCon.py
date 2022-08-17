@@ -68,20 +68,23 @@ def find_port(id: str) -> typing.Optional[serial.Serial]:
             port = serial.Serial(
                 port = port_info.name, 
                 baudrate = 9600,
-                timeout = 0.5
+                timeout = 2
             )   
 
             # ask for id
-            port.write(b"id\r\n")      
-            response = port.readline()
+            for i in range(3):
+                port.write(b"id\r\n")      
+                response = port.readline()
+                response = response.decode("ascii")
+                response = response.strip()
 
-            if response == id:
-                # controller found, return port
-                return port
-            elif not response:
-                print("No response")
-            else:
-                print("Handshake failed")
+                if response == id:
+                    # controller found, return port
+                    return port
+                elif not response:
+                    print("No response")
+                else:
+                    print("Handshake failed")
             
             # close port
             port.close()
@@ -133,6 +136,11 @@ def lever_to_str(lever_pos: int, settings: Settings) -> str:
         else:
             return f"B{abs(lever_pos)}"
 
+def stufenleser(port):
+    response = port.readline()
+    response = response.decode("ascii")
+    response = response.strip()    
+    return response
 
 def main():
     print("MasuCon Driver v2.0")
@@ -162,17 +170,21 @@ def main():
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
-        # return                # DEBUG ONLY
+        return                # DEBUG ONLY
 
     print("Connection established")
 
 
     # main loop
     print("Starting main loop...")
-    lever_physical = -15        # DEBUG ONLY
+    #lever_physical = -15        # DEBUG ONLY
+    lever_physical = 0
     lever_guess = 0
     while True:
-        # lever_physical = masucon.readline()
+        try:
+            lever_physical = int(stufenleser(masucon))
+        except ValueError:
+            continue 
         lever_target = map_lever(lever_physical, settings)
         lever_str = lever_to_str(lever_target, settings)
 
@@ -221,9 +233,9 @@ def main():
         print(steps)
         print()
         time.sleep(0.2)
-        lever_physical += 1     # DEBUG ONLY
-        if lever_physical > 15: # DEBUG ONLY
-            break               # DEBUG ONLY
+        #lever_physical += 1     # DEBUG ONLY
+        #if lever_physical > 15: # DEBUG ONLY
+        #    break               # DEBUG ONLY
         
 
 if __name__ == "__main__":
