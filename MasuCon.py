@@ -56,7 +56,16 @@ class Settings:
             return Settings()
 
 
+def clean_read(port) -> str:
+    """Reads a line from a port, converts it to a string and removes whitespace."""
+    response = port.readline()
+    response = response.decode("ascii")
+    response = response.strip()    
+    return response
+
+
 def find_port(id: str, timeout: float) -> typing.Optional[serial.Serial]:
+    """Tries to find the controller by going through all available ports until one responds with the correct ID."""
     port_list = serial.tools.list_ports.comports()
     if not port_list:
         print("No ports found")
@@ -73,19 +82,22 @@ def find_port(id: str, timeout: float) -> typing.Optional[serial.Serial]:
             )   
 
             # ask for id
-            for i in range(3):
+            for _ in range(3):
+                # ask device to identify itself
                 port.write(b"id\r\n")      
-                response = port.readline()
-                response = response.decode("ascii")
-                response = response.strip()
 
-                if response == id:
-                    # controller found, return port
-                    return port
-                elif not response:
-                    print("No response")
+                # wait for response
+                response = clean_read(port)
+
+                # check if response is correct
+                if response:
+                    if response == id:
+                        # controller found, return port
+                        return port
+                    else:
+                        print("Wrong response")
                 else:
-                    print("Handshake failed")
+                    print("No response")
             
             # close port
             port.close()
@@ -96,14 +108,15 @@ def find_port(id: str, timeout: float) -> typing.Optional[serial.Serial]:
             continue
 
 
-def press_key(key: str, controller: Controller, delay_before_release: float = 0.1, delay_after_release: float = 0):
+def press_key(key: str, controller: Controller, delay_before_release: float = 0.1, delay_after_release: float = 0) -> None:
+    """Presses a key on the keyboard and releases it after a delay."""
     controller.press(key)
     time.sleep(delay_before_release)
     controller.release(key)
     time.sleep(delay_after_release)
 
 
-def press_key_debug(key: str):
+def press_key_debug(key: str) -> None:
     print(key, end="")
 
 
@@ -127,6 +140,7 @@ def map_lever(lever_pos: int, settings: Settings) -> int:
     
 
 def lever_to_str(lever_pos: int, settings: Settings) -> str:
+    """Converts a lever position to a string."""
     if lever_pos == 0: 
         return "N"
     elif lever_pos > 0:
@@ -137,11 +151,6 @@ def lever_to_str(lever_pos: int, settings: Settings) -> str:
         else:
             return f"B{abs(lever_pos)}"
 
-def stufenleser(port):
-    response = port.readline()
-    response = response.decode("ascii")
-    response = response.strip()    
-    return response
 
 def main():
     print("MasuCon Driver v2.0")
@@ -161,9 +170,6 @@ def main():
         delay_after_release=settings.button_delay_after_release
     )
 
-    # use like this:
-    # press_key_simple("l")
-
 
     # connect to MasuCon
     print("Connecting to MasuCon...")
@@ -178,14 +184,14 @@ def main():
 
     # main loop
     print("Starting main loop...")
-    #lever_physical = -15        # DEBUG ONLY
-    lever_physical = 0
     lever_guess = 0
     while True:
         try:
-            lever_physical = int(stufenleser(masucon))
+            lever_physical = int(clean_read(masucon))
         except ValueError:
+            # controller sent text or empty line, just ignore it
             continue 
+
         lever_target = map_lever(lever_physical, settings)
         lever_str = lever_to_str(lever_target, settings)
 
@@ -222,21 +228,21 @@ def main():
         
         # send button presses as described in the step list
         for s in steps:
-            press_key_debug(s)
+            # press_key_simple(s)
+            press_key_debug(s) # DEBUG ONLY
 
         # update assumed position
         lever_guess = lever_target
 
-
+        # verbose output for debugging
         print(lever_physical)
         print(lever_target)
         print(lever_str)
         print(steps)
         print()
-        time.sleep(0.2)
-        #lever_physical += 1     # DEBUG ONLY
-        #if lever_physical > 15: # DEBUG ONLY
-        #    break               # DEBUG ONLY
+
+        # sleep a bit 
+        time.sleep(0.01)
         
 
 if __name__ == "__main__":
