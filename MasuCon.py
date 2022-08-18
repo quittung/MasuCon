@@ -177,7 +177,7 @@ def main():
 
     if not masucon:
         print("Unable to establish connection to MasuCon")
-        return                # DEBUG ONLY
+        return
 
     print("Connection established")
 
@@ -229,7 +229,7 @@ def main():
         # send button presses as described in the step list
         for s in steps:
             # press_key_simple(s)
-            press_key_debug(s) # DEBUG ONLY
+            press_key_debug(s) # DEBUG ONLY, use press_key_simple for actual operation
 
         # update assumed position
         lever_guess = lever_target
