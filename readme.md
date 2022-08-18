@@ -19,20 +19,28 @@ Dann wird die Fahrstufe auf den vom Simulator unterstützen Bereich angepasst:
  Nicht jede Stufe kann direkt im Simulator eingestellt werden, die meisten müssen über mehrmaliges Drücken von D-Pad Up oder D-Pad Down schrittweise erreicht werden. Ohne Feedback vom Simulator muss das Skript deswegen den vermuteten aktuellen Zustand des Fahr-Brems-Hebels im Simulator mitverfolgen. 
  
  Nachdem eine neue Zielstufe empfangen wurde, wird diese mit der vermuteten aktuellen Stufe verglichen. Eine Liste von allen Stufen dazwischen wird erzeugt, hier am Beispiel ```P1 -> B2```:
- ```P1 N B1 B2```
+ ```
+ Stufen:  P1 N B1 B2
+ ```
 
  Hier könnte nun 3 mal D-Pad Down gesendet werden:
- ```P1 N B1 B2```
- ```   D D  D```
+```
+Stufen:  P1 N B1 B2
+Befehle:    D D  D
+```
 
 In "Trainsim Real" können jedoch bestimmte Stufen direkt angefahren werden:
-```P1 N B1 B2```
-```   N B1 D```
+```
+Stufen:  P1 N B1 B2
+Befehle:    N B1 D
+```
 
 Man kann also von der Zielstufe beim nächsten absoluten Befehl anfangen:
-```P1 N B1 B2```
-```     B1 D```
+```
+Stufen:  P1 N B1 B2
+Befehle:      B1 D
+```
 
 So kann man teilweise die Zahl der benötigten Tastendrücke deutlich reduzieren. 
 
-Absolute Befehle ermöglichen auch einen relativ sicheren Rückschluss auf die tatsächlich eingestellte Stufe im Simulator, die sonst nur mit einer gewissen Unsicherheit ermittelt werden kann. Bei Treiber- oder Simulatorstart ist diese komplett unbekannt. Aber auch danach besteht die Gefahr, dass z.B. ein gesendeter Befehl vom Simulator nicht verarbeitet wurde. Das wird einerseits in Kauf genommen, andererseits aber durch einstellbare Verzögerungen beim Tastenanschlag unwahrscheinlicher gemacht. 
+Absolute Befehle ermöglichen auch einen relativ sicheren Rückschluss auf die tatsächlich eingestellte Stufe im Simulator, die sonst nur mit einer gewissen Unsicherheit ermittelt werden kann. Bei Treiber- oder Simulatorstart ist sie komplett unbekannt, aber auch danach besteht die Gefahr, dass z.B. ein gesendeter Befehl vom Simulator nicht verarbeitet wurde. Das wird einerseits in Kauf genommen, andererseits aber durch einstellbare Verzögerungen beim Tastenanschlag unwahrscheinlicher gemacht. 
