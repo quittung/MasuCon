@@ -1,3 +1,4 @@
+from calendar import c
 from dataclasses import dataclass, field
 from functools import partial
 import json
@@ -8,7 +9,8 @@ import typing
 # required modules: pyserial, pyinput
 import serial
 import serial.tools.list_ports
-from pynput.keyboard import Controller
+from pynput.keyboard import Key, Controller as KeyboardController
+from pynput.mouse import Button, Controller as MouseController
 
 
 @dataclass
@@ -54,6 +56,46 @@ class Settings:
             print("Using default settings for now. Try regenerating the settings file and transfer your changes manually.")
 
             return Settings()
+
+
+class Controller:
+    keyboard: KeyboardController
+    mouse: MouseController
+
+    def __init__(self):
+        self.keyboard = KeyboardController()
+        self.mouse = MouseController()
+
+    def press_key(self, key: str, delay_before_release: float = 0.1, delay_after_release: float = 0) -> None:
+        """Presses a key on and releases it after a delay."""
+        if len(key) == 1:
+            self.keyboard.press(key)
+            time.sleep(delay_before_release)
+            self.keyboard.release(key)
+            time.sleep(delay_after_release)
+
+        elif len(key) > 1:
+            key_device, key_name = key.split("_")
+            if key_device == "m":
+                if key_name == "scrollup":
+                    self.mouse.scroll(0, 1)
+                elif key_name == "scrolldown":
+                    self.mouse.scroll(0, -1)
+                else:
+                    self.mouse.press(getattr(Button, key_name))
+                    time.sleep(delay_before_release)
+                    self.mouse.release(getattr(Button, key_name))
+                    time.sleep(delay_after_release)
+
+            elif key_device == "k":
+                self.keyboard.press(getattr(Key, key_name))
+                time.sleep(delay_before_release)
+                self.keyboard.release(getattr(Key, key_name))
+                time.sleep(delay_after_release)
+
+
+def press_key_debug(key: str) -> None:
+    print(key, end="")
 
 
 def clean_read(port) -> str:
@@ -108,18 +150,6 @@ def find_port(id: str, timeout: float) -> typing.Optional[serial.Serial]:
             continue
 
 
-def press_key(key: str, controller: Controller, delay_before_release: float = 0.1, delay_after_release: float = 0) -> None:
-    """Presses a key on the keyboard and releases it after a delay."""
-    controller.press(key)
-    time.sleep(delay_before_release)
-    controller.release(key)
-    time.sleep(delay_after_release)
-
-
-def press_key_debug(key: str) -> None:
-    print(key, end="")
-
-
 def map_lever(lever_pos: int, settings: Settings) -> int:
     """Maps the physical lever position to what is supported by the sim."""
     if lever_pos > settings.lever_max_power:
@@ -162,10 +192,9 @@ def main():
 
     # prepare keyboard controller
     print("Preparing keyboard controller...")
-    keyboard_controller = Controller()
+    controller = Controller()
     press_key_simple = partial(
-        press_key, 
-        controller=keyboard_controller, 
+        controller.press_key,  
         delay_before_release=settings.button_delay_before_release, 
         delay_after_release=settings.button_delay_after_release
     )
@@ -228,8 +257,8 @@ def main():
         
         # send button presses as described in the step list
         for s in steps:
-            # press_key_simple(s)
-            press_key_debug(s) # DEBUG ONLY, use press_key_simple for actual operation
+            press_key_simple(s)
+            # press_key_debug(s) # DEBUG ONLY, use press_key_simple for actual operation
 
         # update assumed position
         lever_guess = lever_target

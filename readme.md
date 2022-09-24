@@ -44,3 +44,30 @@ Befehle:      B1 D
 So kann man teilweise die Zahl der benötigten Tastendrücke deutlich reduzieren. 
 
 Absolute Befehle ermöglichen auch einen relativ sicheren Rückschluss auf die tatsächlich eingestellte Stufe im Simulator, die sonst nur mit einer gewissen Unsicherheit ermittelt werden kann. Bei Treiber- oder Simulatorstart ist sie komplett unbekannt, aber auch danach besteht die Gefahr, dass z.B. ein gesendeter Befehl vom Simulator nicht verarbeitet wurde. Das wird einerseits in Kauf genommen, andererseits aber durch einstellbare Verzögerungen beim Tastenanschlag unwahrscheinlicher gemacht. 
+
+## Einstellungen
+### JR EAST Train Simulator
+```
+"lever_max_power": 5,
+"lever_max_service_brake": -8,
+"lever_thresh_emergency_brake": -9,
+"buttons": {
+    "up": "m_scrolldown",
+    "down": "m_scrollup",
+    "n": "m_middle"
+},
+```
+
+### The Keihin Kyuukou - Train Simulator Real (PCSX2)
+```
+"lever_max_power": 5,
+"lever_max_service_brake": -5,
+"lever_thresh_emergency_brake": -6,
+"buttons": {
+    "up": "u",
+    "down": "d",
+    "n": "n",
+    "b1": "b",
+    "eb": "e"
+},
+```
